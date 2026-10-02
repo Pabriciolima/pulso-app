@@ -1,0 +1,20 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'com.pabriciolima.pulso'
+ compileSdk 35
+ defaultConfig { applicationId 'com.pabriciolima.pulso'; minSdk 26; targetSdk 35; versionCode 1; versionName '1.0.0' }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+ def keys = new Properties()
+ def keyFile = rootProject.file('signing.properties')
+ if (keyFile.exists()) {
+  keyFile.withInputStream { keys.load(it) }
+  signingConfigs { release { storeFile rootProject.file(keys['storeFile']); storePassword keys['storePassword']; keyAlias keys['keyAlias']; keyPassword keys['keyPassword'] } }
+ }
+ buildTypes { release { minifyEnabled false; if (keyFile.exists()) signingConfig signingConfigs.release } }
+}
+// Use the web source in the repository; no duplicate database or patient data.
+tasks.register('syncWeb', Copy) {
+ from('../../') { include 'index.html','app.js','config.js','safety.mjs','style.css','cooky.gif','icon.svg','manifest.webmanifest','icons/**' }
+ into('src/main/assets/www')
+}
+preBuild.dependsOn('syncWeb')
