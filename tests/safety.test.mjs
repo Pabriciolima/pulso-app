@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {adviceFor,validateReading} from '../safety.mjs';
+const reading={systolic:120,diastolic:80,pulse:72,period:'Manhã',measured_at:'2026-09-30T10:00:00Z',symptoms:[],notes:''};
+assert.equal(adviceFor({...reading,symptoms:['Dor / pressão forte no peito']}).emergency,true);
+assert.equal(adviceFor({...reading,symptoms:['Dor de cabeça súbita e intensa']}).emergency,true);
+assert.equal(adviceFor({...reading,systolic:180}).level,'danger');
+assert.equal(adviceFor({...reading,systolic:150,diastolic:120}).level,'danger');
+assert.equal(adviceFor({...reading,systolic:179,diastolic:119}).level,'attention');
+assert.equal(adviceFor({...reading,systolic:85,diastolic:55}).level,'attention');
+assert.equal(adviceFor(reading).level,'calm');
+assert.equal(adviceFor({...reading,symptoms:['Dor de cabeça']}).level,'attention');
+assert.doesNotThrow(()=>validateReading(reading));
+assert.throws(()=>validateReading({...reading,systolic:12,diastolic:8}));
+assert.throws(()=>validateReading({...reading,systolic:80,diastolic:120}));
+assert.throws(()=>validateReading({...reading,measured_at:'2100-01-01T00:00:00Z'}));
+assert.throws(()=>validateReading({...reading,pulse:0}));
+assert.doesNotThrow(()=>validateReading({...reading,pulse:null}));
+console.log('14 verificações dos alertas e da validação passaram.');
