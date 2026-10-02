@@ -17,6 +17,14 @@ Deno.serve(async req=>{
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token)))).map(v=>v.toString(16).padStart(2,'0')).join('');
  try{
   const diaries=await db('pulso_diaries?select=id&access_hash=eq.'+hash+'&limit=1');
+  if(req.method==='POST'&&new URL(req.url).searchParams.get('start')==='1'){
+   if(!diaries.length){
+    const recent=await db('pulso_diaries?select=id&created_at=gt.'+encodeURIComponent(new Date(Date.now()-60000).toISOString())+'&limit=21');
+    if(recent.length>=20)return reply({message:'Aguarde um minuto para preparar seu diário.'},429);
+    await db('pulso_diaries','POST',{access_hash:hash});
+   }
+   return reply({ready:true});
+  }
   if(!diaries.length)return reply({message:'Este link pessoal não é válido. Use o link que recebeu.'},401);
   const diary=diaries[0].id,expiry=new Date(Date.now()-60*86400000).toISOString();
   const scope='diary_id=eq.'+diary+'&created_at=gt.'+encodeURIComponent(expiry);

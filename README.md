@@ -1,7 +1,10 @@
 # Pulso 💜
 Diário de pressão em português, HTML/CSS/JavaScript, sem build. Visual carinhoso com a coelhinha Lili; manhã/tarde/noite, sintomas, histórico, gráfico, edição, exclusão, CSV e impressão/PDF.
 
-## Acesso sem cadastro
+## Entrada direta sem cadastro
+Os campos ficam na tela inicial, com orientações durante a digitação. Cada navegador gera automaticamente uma chave aleatória e provisiona seu próprio diário no banco existente, sem dados de outros aparelhos. A chave fica no armazenamento do navegador; apagar os dados do navegador pode perder o acesso. Registros anteriores do diário original são preservados e não transferidos automaticamente. O endpoint start limita novas criações a 20 por minuto no total.
+
+## Compatibilidade com acesso anterior
 Um link pessoal contém uma chave aleatória de 256 bits no fragmento da URL. O navegador lembra a chave localmente. A chave nunca é incluída no repositório, nem enviada no endereço HTTP. A função Supabase `pulso-diary` recebe a chave num cabeçalho, verifica seu SHA-256 e restringe todas as operações ao diário correspondente. Quem possui o link pode ler e modificar esse diário. Não compartilhar publicamente.
 
 A função usa a chave de serviço apenas no servidor. A tabela de diários não é acessível a `anon` ou `authenticated`; RLS das medições continua ativa. Acesso sem link é recusado. Sem cache local de medições. Internet obrigatória, salvamento confirmado somente após resposta do servidor. Não modifica configurações Auth de outros aplicativos.
