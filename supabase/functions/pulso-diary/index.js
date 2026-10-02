@@ -7,51 +7,14 @@ async function db(path,method='GET',body){
  if(!r.ok)throw new Error('database');
  return r.status===204?null:r.json();
 }
-const digest=async text=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(v=>v.toString(16).padStart(2,'0')).join('');
 Deno.serve(async req=>{
  const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,apikey,x-pulso-access','Access-Control-Allow-Methods':'GET,POST,PATCH,DELETE,OPTIONS','Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
  const reply=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:cors});
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
  if(!['GET','POST','PATCH','DELETE'].includes(req.method))return reply({message:'Método não permitido.'},405);
- const token=req.headers.get('x-pulso-access')||'';
- if(!/^[A-Za-z0-9_-]{43}$/.test(token))return reply({message:'Abra pelo seu link pessoal para acessar o diário.'},401);
- const hash=await digest(token);
  try{
-  const aliases=await db('pulso_device_keys?select=diary_id&access_hash=eq.'+hash+'&limit=1');
-  const diaries=aliases.length?[{id:aliases[0].diary_id}]:await db('pulso_diaries?select=id&access_hash=eq.'+hash+'&limit=1');
-  if(req.method==='POST'&&new URL(req.url).searchParams.get('start')==='1'){
-   if(!diaries.length){
-    const recent=await db('pulso_diaries?select=id&created_at=gt.'+encodeURIComponent(new Date(Date.now()-60000).toISOString())+'&limit=21');
-    if(recent.length>=20)return reply({message:'Aguarde um minuto para preparar seu diário.'},429);
-    await db('pulso_diaries','POST',{access_hash:hash});
-   }
-   return reply({ready:true});
-  }
-  if(!diaries.length)return reply({message:'Este link pessoal não é válido. Use o link que recebeu.'},401);
-  const diary=diaries[0].id,expiry=new Date(Date.now()-60*86400000).toISOString();
+  const diary='c1862cad-a4e9-491a-bb2a-021ec8d48690',expiry=new Date(Date.now()-60*86400000).toISOString();
   const scope='diary_id=eq.'+diary+'&created_at=gt.'+encodeURIComponent(expiry);
-  const action=new URL(req.url).searchParams.get('action');
-  if(req.method==='POST'&&action==='pair-code'){
-   const now=new Date().toISOString();
-   await db('pulso_pair_codes?expires_at=lte.'+encodeURIComponent(now),'DELETE');
-   const codes=await db('pulso_pair_codes?select=code_hash&diary_id=eq.'+diary+'&expires_at=gt.'+encodeURIComponent(now));
-   if(codes.length>=3)return reply({message:'Já há códigos ativos. Use um deles ou espere 10 minutos.'},429);
-   const bytes=crypto.getRandomValues(new Uint8Array(9));
-   const code=btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-   await db('pulso_pair_codes','POST',{code_hash:await digest(code),diary_id:diary,expires_at:new Date(Date.now()+600000).toISOString()});
-   return reply({code,expires_in:600});
-  }
-  if(req.method==='POST'&&action==='pair-join'){
-   let data;try{data=JSON.parse(await req.text())}catch{return reply({message:'Código inválido.'},400)}
-   if(!/^[A-Za-z0-9_-]{12}$/.test(data.code||''))return reply({message:'Confira o código de 12 caracteres.'},400);
-   const codeHash=await digest(data.code),now=new Date().toISOString();
-   const code=await db('pulso_pair_codes?code_hash=eq.'+codeHash+'&expires_at=gt.'+encodeURIComponent(now),'PATCH',{expires_at:now});
-   if(!code.length)return reply({message:'Código inválido, usado ou expirado. Gere outro no primeiro aparelho.'},400);
-   if(aliases.length)await db('pulso_device_keys?access_hash=eq.'+hash,'PATCH',{diary_id:code[0].diary_id});
-   else await db('pulso_device_keys','POST',{access_hash:hash,diary_id:code[0].diary_id});
-   return reply({paired:true});
-  }
-
   if(req.method==='GET')return reply(await db('pulso_readings?select=id,measured_at,period,systolic,diastolic,pulse,symptoms,notes,created_at&'+scope+'&order=measured_at.desc&limit=2000'));
   const id=new URL(req.url).searchParams.get('id');
   if(req.method!=='POST'&&(!id||!uuid.test(id)))return reply({message:'Medição inválida.'},400);

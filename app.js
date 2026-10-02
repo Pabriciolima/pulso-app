@@ -1,7 +1,7 @@
 import {adviceFor,validateReading} from './safety.mjs';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const config=window.PULSO_CONFIG||{}, configured=!!(config.supabaseUrl&&config.supabaseKey);
-let records=[], access=null, editId=null, deleteId=null, range='7', loadSequence=0, diaryReady=Promise.resolve();
+let records=[],  editId=null, deleteId=null, range='7', loadSequence=0;
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d));
 const dateKey=d=>{const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`};
@@ -12,12 +12,11 @@ function banner(message){$('#connection-banner').hidden=!message;$('#connection-
 function setView(view){if($('#navigation-menu').open)$('#navigation-menu').close();$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;window.scrollTo({top:0,behavior:'smooth'})}
 async function request(path='',{method='GET',body}={}){
  if(!configured)throw Error('A conexão com o diário ainda precisa ser configurada.');
- await diaryReady;if(!access)throw Error('Não consegui preparar este aparelho. Atualize a página.');
- let response;try{response=await fetch(config.supabaseUrl+'/functions/v1/pulso-diary'+path,{method,headers:{apikey:config.supabaseKey,'Content-Type':'application/json','x-pulso-access':access},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000)})}catch{throw Error('Não consegui conectar. Confira a internet e tente de novo. Nenhum salvamento foi confirmado.')}
+ let response;try{response=await fetch(config.supabaseUrl+'/functions/v1/pulso-diary'+path,{method,headers:{apikey:config.supabaseKey,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000)})}catch{throw Error('Não consegui conectar. Confira a internet e tente de novo. Nenhum salvamento foi confirmado.')}
  const data=await response.json().catch(()=>null);if(!response.ok)throw Error(data?.message||'Não consegui concluir. Tente novamente.');return data;
 }
-function renderAccount(){$('#account-name').textContent='Seu cantinho pessoal';$('#account-status').textContent=access?'Diário deste aparelho':'Preparando seu diário';$('#account-detail').textContent='Preencha os números na tela inicial. Este navegador lembra seu acesso. Vincule outros aparelhos abaixo para manter o mesmo diário sincronizado.';}
-async function loadRecords(silent=false){if(!access)return;const sequence=++loadSequence;if(!silent)banner('Organizando seu diário…');try{const data=await request();if(sequence!==loadSequence)return;records=data;banner('');render();$('#account-status').textContent='Tudo sincronizado 💜'}catch(e){if(sequence===loadSequence){banner(e.message);$('#account-status').textContent='Sem sincronização — confira sua conexão'}}}
+function renderAccount(){$('#account-name').textContent='Seu cantinho pessoal';$('#account-status').textContent='Diário único · todos os aparelhos';$('#account-detail').textContent='Preencha os números na tela inicial. PC e celular usam o mesmo histórico automaticamente. Nenhum login, código ou vínculo é necessário.';}
+async function loadRecords(silent=false){const sequence=++loadSequence;if(!silent)banner('Organizando seu diário…');try{const data=await request();if(sequence!==loadSequence)return;records=data;banner('');render();$('#account-status').textContent='Tudo sincronizado 💜'}catch(e){if(sequence===loadSequence){banner(e.message);$('#account-status').textContent='Sem sincronização — confira sua conexão'}}}
 function subset(){if(range==='all')return records;const since=new Date();since.setDate(since.getDate()-Number(range)+1);since.setHours(0,0,0,0);return records.filter(r=>new Date(r.measured_at)>=since)}
 function filtered(){const start=$('#filter-start').value,end=$('#filter-end').value,period=$('#filter-period').value;return records.filter(r=>{const day=dateKey(r.measured_at);return(!start||day>=start)&&(!end||day<=end)&&(period==='all'||r.period===period)})}
 function row(r,history=false){const a=adviceFor(r);return `<div class="${history?'history-item':''}"><div class="reading-row"><span class="reading-mark" aria-hidden="true">${r.period==='Manhã'?'☀':r.period==='Tarde'?'◷':'☾'}</span><div class="reading-info"><strong>${escape(r.period)}</strong><small>${fmt(r.measured_at)}</small>${history?`<span class="status-chip ${a.level==='calm'?'':a.level}">${escape(a.label)}</span>`:''}</div><div class="reading-values"><strong>${r.systolic} / ${r.diastolic}</strong><small>mmHg${r.pulse?` · ${r.pulse} bpm`:''}</small></div>${history?`<div class="reading-actions"><button data-edit="${r.id}" aria-label="Editar medição de ${fmt(r.measured_at)}">Editar</button><button data-delete="${r.id}" aria-label="Excluir medição de ${fmt(r.measured_at)}">Excluir</button></div>`:''}</div>${history&&(r.symptoms?.length||r.notes)?`<div class="notes">${r.symptoms?.length?`<strong>Sintomas:</strong> ${escape(r.symptoms.join(', '))}<br>`:''}${escape(r.notes)}</div>`:''}</div>`}
@@ -50,21 +49,10 @@ function csvCell(value){let s=String(value??'');if(/^[=+\-@\t\r]/.test(s))s="'"+
 $('#export-csv').onclick=()=>{const data=filtered();if(!data.length){toast('Nenhum registro no intervalo selecionado.');return}const rows=[['Data e hora','Período','Sistólica (mmHg)','Diastólica (mmHg)','Pulso (bpm)','Sintomas','Observações'],...data.map(r=>[fmt(r.measured_at),r.period,r.systolic,r.diastolic,r.pulse,r.symptoms.join(', '),r.notes])];const blob=new Blob(['\ufeff'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`pulso-registros-${dateKey(new Date())}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 function printReport(){const data=filtered();if(!data.length){toast('Adicione uma medição antes de gerar o relatório.');return}setView('historico');$$('.report-header,.report-only').forEach(el=>el.remove());const header=document.createElement('div');header.className='report-header';header.innerHTML=`<h1>Pulso · Diário de pressão arterial</h1><p>Gerado em ${fmt(new Date())} · ${data.length} medições<br>Intervalo: ${$('#filter-start').value||'início do histórico'} a ${$('#filter-end').value||'hoje'} · Período: ${escape($('#filter-period').value==='all'?'todos':$('#filter-period').value)}</p>`;$('#view-historico').prepend(header);const foot=document.createElement('p');foot.className='report-only';foot.textContent='Valores informados pela usuária, não verificados pelo app. Este diário não estabelece diagnóstico e não substitui a avaliação médica. Os sintomas registrados se referem ao momento de cada medição. A média não descarta episódios de pressão muito elevada.';$('#view-historico').append(foot);window.print()}
 $('#today-date').textContent=new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
-async function prepareDiary(){
- try{
-  const incoming=new URLSearchParams(location.hash.slice(1)).get('d');
-  access=/^[A-Za-z0-9_-]{43}$/.test(incoming||'')?incoming:localStorage.getItem('pulso-access');
-  if(!/^[A-Za-z0-9_-]{43}$/.test(access||'')){const bytes=crypto.getRandomValues(new Uint8Array(32));access=btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-  localStorage.setItem('pulso-access',access);
-  if(incoming)history.replaceState(null,'',location.pathname+location.search+'#inicio');
-  const response=await fetch(config.supabaseUrl+'/functions/v1/pulso-diary?start=1',{method:'POST',headers:{apikey:config.supabaseKey,'x-pulso-access':access},signal:AbortSignal.timeout(15000)});
-  if(!response.ok)throw Error('Não consegui preparar o diário. Aguarde um pouco e atualize a página.');
- }catch(e){throw Error(e.message||'Este navegador precisa permitir armazenamento para lembrar seu diário.');}
-}
 setView(['inicio','historico','cuidados','conta'].includes(location.hash.slice(1))?location.hash.slice(1):'inicio');render();
 $('#reading-form').elements.measured_at.value=localDatetime();$('#reading-form').elements.period.value=periodFor(new Date());updateLiveAdvice();
-if(!configured)banner('A conexão com o banco ainda precisa ser configurada.');else{diaryReady=prepareDiary();diaryReady.then(()=>loadRecords()).catch(e=>banner(e.message));}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&access)loadRecords()});
+if(!configured)banner('A conexão com o banco ainda precisa ser configurada.');else{loadRecords();queueMicrotask(connectLive);}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadRecords()});
 
 const menu=$('#navigation-menu');
 $('#open-menu').onclick=()=>{menu.showModal();$('#open-menu').setAttribute('aria-expanded','true');};
@@ -72,9 +60,19 @@ $('#close-menu').onclick=()=>menu.close();
 menu.addEventListener('close',()=>$('#open-menu').setAttribute('aria-expanded','false'));
 menu.addEventListener('click',e=>{if(e.target!==menu)return;const r=menu.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)menu.close();});
 
-$('#make-pair-code').onclick=async()=>{const b=$('#make-pair-code');b.disabled=true;$('#pair-error').textContent='';try{const data=await request('?action=pair-code',{method:'POST'});$('#pair-code-output').hidden=false;$('#pair-code-output').textContent=`Seu código: ${data.code} · válido por 10 minutos. Digite exatamente assim no outro aparelho.`;}catch(e){$('#pair-error').textContent=e.message}finally{b.disabled=false}};
-$('#pair-form').onsubmit=async e=>{e.preventDefault();if(records.length&&!confirm('Este aparelho passará a mostrar o diário do código. Os registros atuais continuam preservados no diário anterior. Continuar?'))return;const b=$('#join-pair');b.disabled=true;$('#pair-error').textContent='';try{await request('?action=pair-join',{method:'POST',body:{code:$('#pair-code-input').value.trim()}});++loadSequence;records=[];editId=null;render();await loadRecords();$('#pair-form').reset();toast('Aparelhos vinculados! Agora vocês usam o mesmo diário. 💜')}catch(e){$('#pair-error').textContent=e.message}finally{b.disabled=false}};
-let syncBusy=false;
-async function autoSync(){if(document.hidden||!access||syncBusy)return;syncBusy=true;try{await loadRecords(true)}finally{syncBusy=false}}
-setInterval(autoSync,30000);window.addEventListener('focus',autoSync);window.addEventListener('online',autoSync);
-window.addEventListener('storage',e=>{if(e.key==='pulso-access'&&e.newValue){access=e.newValue;++loadSequence;records=[];render();autoSync();}});
+let syncBusy=false,syncAgain=false;
+async function autoSync(){if(document.hidden)return;if(syncBusy){syncAgain=true;return}syncBusy=true;try{await loadRecords(true)}finally{syncBusy=false;if(syncAgain){syncAgain=false;autoSync()}}}
+let liveSocket=null,liveHeartbeat=null,liveRetry=null,liveRef=0,liveJoined=false;
+function connectLive(){
+ if(!configured||document.hidden||!navigator.onLine||liveSocket?.readyState===WebSocket.OPEN||liveSocket?.readyState===WebSocket.CONNECTING)return;
+ clearTimeout(liveRetry);
+ const socket=new WebSocket(config.supabaseUrl.replace(/^http/,'ws')+'/realtime/v1/websocket?apikey='+encodeURIComponent(config.supabaseKey)+'&vsn=1.0.0');liveSocket=socket;liveJoined=false;
+ const send=(topic,event,payload)=>socket.readyState===WebSocket.OPEN&&socket.send(JSON.stringify({topic,event,payload,ref:String(++liveRef)}));
+ socket.onopen=()=>{send('realtime:pulso-shared','phx_join',{config:{broadcast:{ack:false,self:false},presence:{enabled:false},postgres_changes:[],private:false}});liveHeartbeat=setInterval(()=>send('phoenix','heartbeat',{}),25000);};
+ socket.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(m.event==='phx_reply'&&m.topic==='realtime:pulso-shared'){if(m.payload?.status==='ok'){liveJoined=true;$('#account-status').textContent='Sincronização em tempo real 💜';autoSync()}else socket.close();}if(m.event==='broadcast'&&m.payload?.event==='changed')autoSync();if(m.event==='phx_error'||m.event==='phx_close')socket.close();};
+ socket.onerror=()=>socket.close();
+ socket.onclose=()=>{if(liveSocket!==socket)return;liveSocket=null;liveJoined=false;clearInterval(liveHeartbeat);$('#account-status').textContent='Reconectando sincronização…';if(!document.hidden)liveRetry=setTimeout(connectLive,5000);};
+}
+setInterval(()=>{if(!liveJoined)autoSync()},30000);
+window.addEventListener('focus',()=>{autoSync();connectLive()});window.addEventListener('online',()=>{autoSync();connectLive()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(liveRetry);liveSocket?.close()}else{autoSync();connectLive()}});
