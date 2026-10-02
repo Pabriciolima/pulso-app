@@ -4,7 +4,7 @@ Aplicativo responsivo em HTML, CSS e JavaScript, sem etapa de build. Registros d
 
 ## Estado desta entrega
 
-Código implementado. **Ainda não publicado, sem banco configurado.** A prévia indica explicitamente que não salva dados. Nenhum dado real foi inserido.
+Código implementado, banco configurado no projeto existente Champion Team SaaS, sem criação de projeto pago. Publicação na Vercel depende do acesso à conta. Retenção de 60 dias desde `created_at`, com invisibilidade após o prazo e remoção física na próxima execução horária. Nenhum dado real foi inserido.
 
 ## Configuração
 
@@ -28,3 +28,9 @@ Fontes: American Heart Association, páginas “When To Call 911 About High Bloo
 ## Verificação local
 
 Sirva a pasta com um servidor HTTP estático. `safety.mjs` exporta as funções puras dos alertas e validação. Execute `node tests/safety.test.mjs` para verificar os ramos críticos. O envio de e-mail e a persistência entre aparelhos precisam de teste no ambiente configurado; não foram verificados nesta entrega sem banco.
+
+## Retenção de dados
+
+Job `pulso_retention_60_days`, minuto 17 de cada hora (UTC), apaga apenas registros do Pulso com 60 dias ou mais desde o armazenamento. Logs desse job são limpos após 7 dias. RLS oculta registros expirados imediatamente. Usuários não podem alterar `created_at`, e editar registros não renova a retenção. Backups administrados pelo Supabase seguem a retenção do provedor; esta rotina remove dados da tabela ativa e não altera backups do projeto.
+
+Verificação em transação revertida: isolamento entre dois usuários, bloqueio de inserção para outro usuário, bloqueio de alteração da data de retenção, ocultação de expirados e purga que preserva registros recentes.
