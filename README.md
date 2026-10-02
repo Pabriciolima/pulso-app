@@ -15,3 +15,6 @@ Alertas de sintomas têm prioridade sobre números. Sem diagnóstico ou prescri�
 
 ## Publicação
 GitHub Pabriciolima/pulso-app, main, Vercel estática Other sem build. Chave publicável no config.js, nenhuma chave secreta no cliente. Migrações SQL anteriores documentam a evolução; não reaplicar instalações antigas sobre produção.
+
+## Personalização COOKY
+Arte COOKY obtida da página oficial BT21: https://www.bt21.com/character (asset https://cdn-bt21.line-scdn.net/img/character/bt21/cooky.gif). Ícones SVG do projeto, paleta rosa/lilás e apoio a movimento reduzido. Sem alteração de registros, acesso ou sincronização.
