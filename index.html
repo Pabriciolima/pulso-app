@@ -10,7 +10,7 @@
 <body>
 <div class="emergency-strip"><span>Pressão ou dor forte no peito agora? Procure uma emergência.</span><a href="tel:192">SAMU 192</a></div>
 <div class="shell">
-<aside class="sidebar">
+<dialog id="navigation-menu" class="sidebar menu-drawer" aria-label="Menu do Pulso"><button type="button" id="close-menu" class="icon-button drawer-close" aria-label="Fechar menu">×</button>
   <a class="brand" href="#inicio" aria-label="Pulso início"><span class="brand-symbol">♡</span>pulso<span class="brand-dot">.</span></a>
   <p class="eyebrow">UM CARINHO NA SUA ROTINA</p>
   <nav aria-label="Navegação principal">
@@ -21,9 +21,9 @@
   </nav>
   <div class="sidebar-note"><img src="lili.webp" alt="Lili, uma coelhinha segurando um coração" width="130" height="130"><strong>Um passinho de cada vez.</strong><p>Não precisa fazer tudo perfeito. Seu cuidado merece carinho. 💜</p><button class="text-btn report-action">Levar meu diário à consulta</button></div>
   <div class="account-indicator"><span class="avatar">P</span><div><strong id="account-name">Seu espaço particular</strong><small id="account-status">Seu link pessoal</small></div></div>
-</aside>
+</dialog>
 <main>
-  <header class="topbar"><span id="today-date"></span><span class="privacy-pill">💜 Um cuidado de cada vez</span></header>
+  <header class="topbar"><button type="button" id="open-menu" class="menu-toggle" aria-label="Abrir menu" aria-controls="navigation-menu" aria-expanded="false"><span aria-hidden="true">☰</span><span class="menu-label">Menu</span></button><span id="today-date"></span><span class="privacy-pill">💜 Um cuidado de cada vez</span></header>
   <div id="connection-banner" class="connection-banner" hidden></div>
   <section id="view-inicio" class="view">
     <div class="welcome"><div><p class="eyebrow">QUE BOM TER VOCÊ AQUI</p><h1>Oi, meu bem! 💜</h1><p>Vamos cuidar de você, com calma?<br>É só copiar os números do aparelho. Eu organizo seu diário.</p><button class="primary new-reading">♡ Registrar minha pressão</button></div><img src="lili.webp" alt="A Lili te acompanha com carinho" width="240" height="240"></div>

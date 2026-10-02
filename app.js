@@ -9,7 +9,7 @@ function localDatetime(d=new Date()){return `${dateKey(d)}T${String(d.getHours()
 const periodFor=d=>d.getHours()<12?'Manhã':d.getHours()<18?'Tarde':'Noite';
 let toastTimer;function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,4500)}
 function banner(message){$('#connection-banner').hidden=!message;$('#connection-banner').textContent=message||''}
-function setView(view){$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;window.scrollTo({top:0,behavior:'smooth'})}
+function setView(view){if($('#navigation-menu').open)$('#navigation-menu').close();$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;window.scrollTo({top:0,behavior:'smooth'})}
 async function request(path='',{method='GET',body}={}){
  if(!configured)throw Error('A conexão com o diário ainda precisa ser configurada.');
  await diaryReady;if(!access)throw Error('Não consegui preparar este aparelho. Atualize a página.');
@@ -65,3 +65,9 @@ setView(['inicio','historico','cuidados','conta'].includes(location.hash.slice(1
 $('#reading-form').elements.measured_at.value=localDatetime();$('#reading-form').elements.period.value=periodFor(new Date());updateLiveAdvice();
 if(!configured)banner('A conexão com o banco ainda precisa ser configurada.');else{diaryReady=prepareDiary();diaryReady.then(()=>loadRecords()).catch(e=>banner(e.message));}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&access)loadRecords()});
+
+const menu=$('#navigation-menu');
+$('#open-menu').onclick=()=>{menu.showModal();$('#open-menu').setAttribute('aria-expanded','true');};
+$('#close-menu').onclick=()=>menu.close();
+menu.addEventListener('close',()=>$('#open-menu').setAttribute('aria-expanded','false'));
+menu.addEventListener('click',e=>{if(e.target!==menu)return;const r=menu.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)menu.close();});
