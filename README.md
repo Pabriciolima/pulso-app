@@ -22,3 +22,6 @@ Sintomas de alarme têm prioridade sobre os números. Pressão/dor forte no peit
 
 ## Verificação
 `node tests/safety.test.mjs`: 14 verificações de alertas e validação. API testada com dados sintéticos: chave ausente/inválida recusada, validação, salvar/ler/editar/excluir e tentativa de exclusão de ID alheio. Dados sintéticos removidos após teste. Sem notificações automáticas; os períodos são atalhos, não uma meta clínica.
+
+## Sincronização entre dispositivos
+No menu Meu diário e dados, gere um código no aparelho com o histórico e digite no outro. Código aleatório de 72 bits, uso único e validade de 10 minutos. Apenas hashes no banco. Aparelhos vinculados usam o mesmo diary_id; autoatualização a cada 30 segundos com página visível, ao recuperar foco, voltar online e reabrir. Requer internet; não é atualização instantânea em segundo plano. Diário anterior do aparelho fica preservado sem transferência automática. Chaves de dispositivo e códigos usam RLS, sem acesso público.
