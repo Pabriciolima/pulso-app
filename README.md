@@ -8,7 +8,7 @@ Sem login, senha, link pessoal ou código. Qualquer pessoa que acessar o app pod
 Trigger do Postgres envia evento de mudança via Supabase Realtime Broadcast. WebSocket recebe o evento e recarrega os registros confirmados pelo servidor. Inclui criação, edição e exclusão. Eventos contêm somente o tipo da operação, sem valores ou sintomas. Reconexão automática, atualização ao recuperar foco/conexão e fallback de 30 segundos quando WebSocket indisponível. Internet necessária; navegadores suspensos atualizam ao reabrir.
 
 ## Retenção e infraestrutura
-Mesmo Supabase Champion Team SaaS, sem projeto novo ou contratação paga. Retenção de 60 dias desde created_at; editar não renova prazo. Limpeza horária. Dados originais de todos os diários do Pulso foram reunidos sem exclusão.
+Mesmo Supabase HUB de campanhas-pos-vendas, sem projeto novo ou contratação paga. Retenção de 60 dias desde created_at; editar não renova prazo. Limpeza horária. Dados originais de todos os diários do Pulso foram reunidos sem exclusão.
 
 ## Saúde
 Alertas de sintomas têm prioridade sobre números. Sem diagnóstico ou prescrição. Fontes AHA e CDC no app. `node tests/safety.test.mjs`: 14 verificações.
