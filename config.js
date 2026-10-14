@@ -1,2 +1,2 @@
 // Somente chave publicável. Diário único com acesso aberto autorizado pelo proprietário.
-window.PULSO_CONFIG={supabaseUrl:'https://zahskmumgqbhkvcgtamk.supabase.co',supabaseKey:'sb_publishable_-DE_STI_AAD4A34Tii1MbQ_lQlm1I5n'};
+window.PULSO_CONFIG={supabaseUrl:'https://ksyygambidrptnwndjhr.supabase.co',supabaseKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzeXlnYW1iaWRycHRud25kamhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3OTgyNTAsImV4cCI6MjA2MTM3NDI1MH0.fiK1NBwc1mIO3KQkYrPwzTf2cDqoWJAIyqDd8saAsDk'};
